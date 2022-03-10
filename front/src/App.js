@@ -2,27 +2,43 @@ import logo from "./logo.png";
 import "./App.css";
 import React from "react";
 import Typewriter from "typewriter-effect";
+import { useTranslation, withTranslation } from "react-i18next";
+
+const lngs = {
+  en: { nativeName: "English" },
+  ja: { nativeName: "Japanese" },
+};
 
 function App() {
+  const { t, i18n } = useTranslation();
   return (
     <div className="App">
       <header className="App-header">
         <div className="logo-group">
           <img src={logo} className="App-logo" alt="logo" />
-          <p className="title">Keigo Converter</p>
+          <p className="title">{t("title")}</p>
         </div>
         <div className="switch">
           <input
             id="language-toggle"
             className="check-toggle check-toggle-round-flat"
             type="checkbox"
+            onClick={() => {
+              i18n.changeLanguage(
+                i18n.resolvedLanguage === Object.keys(lngs)[0]
+                  ? Object.keys(lngs)[1]
+                  : Object.keys(lngs)[0]
+              );
+              console.log(i18n.resolvedLanguage);
+            }}
+            defaultChecked={i18n.resolvedLanguage === Object.keys(lngs)[0]}
           />
           <label htmlFor="language-toggle"></label>
-          <span className="on">JA</span>
-          <span className="off">EN</span>
+          <span className="on">{t("lang.ja")}</span>
+          <span className="off">{t("lang.en")}</span>
         </div>
       </header>
-      <KeigoConverter class="keigo-converter" />
+      <KeigoConverterT class="keigo-converter" />
     </div>
   );
 }
@@ -53,6 +69,8 @@ class KeigoConverter extends React.Component {
   }
 
   render() {
+    const { t } = this.props;
+
     return (
       <div>
         <form onSubmit={this.handleSubmit}>
@@ -60,14 +78,18 @@ class KeigoConverter extends React.Component {
             className="input"
             type="text"
             name="word"
-            placeholder="Type your word here"
+            placeholder={t("input")}
             onChange={this.handleChange}
           />
-          <input className="input-button" type="submit" value="Show Result" />
+          <input
+            className="input-button"
+            type="submit"
+            value={t("result.show")}
+          />
         </form>
-        <Loading />
+        <LoadingT />
         <div className="result">
-          <Result
+          <ResultT
             isShowResult={this.state.isShowResult}
             data={this.state.apiResponse}
           />
@@ -81,13 +103,14 @@ class Result extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      date: new Date(),
       sonkeigo: keigo[0].sonkeigo,
       kenjougo: keigo[0].kenjougo,
       teineigo: keigo[0].teineigo,
     };
   }
   render() {
+    const { t } = this.props;
+
     if (!this.props.isShowResult) return null;
 
     if (this.props.data) {
@@ -95,9 +118,9 @@ class Result extends React.Component {
         if (this.props.data[0].word_type === "not_found") {
           return (
             <div className="not-found">
-              Sorry, your input is not found in our database (｡╯︵╰｡)
+              {t("result.not_found.title")}
               <br></br>
-              Please try again with a different word or submit to our database.
+              {t("result.not_found.command")}
             </div>
           );
         }
@@ -106,16 +129,15 @@ class Result extends React.Component {
 
     return (
       <div>
-        <h2>尊敬語</h2>
+        <h2>{t("result.sonkeigo.title")}</h2>
         <div>{this.state.sonkeigo.word}</div>
         <div>{this.state.sonkeigo.sentence_jp}</div>
-        <h2>謙譲語</h2>
+        <h2>{t("result.kenjougo.title")}</h2>
         <div>{this.state.kenjougo.word}</div>
         <div>{this.state.kenjougo.sentence_jp}</div>
-        <h2>丁寧語</h2>
+        <h2>{t("result.teineigo.title")}</h2>
         <div>{this.state.teineigo.word}</div>
         <div>{this.state.teineigo.sentence_jp}</div>
-        <h2>It is {this.state.date.toLocaleTimeString()}</h2>
       </div>
     );
   }
@@ -149,9 +171,13 @@ const notFound = [
 ];
 
 class Loading extends React.Component {
+  
   render() {
+    const { t } = this.props;
+
     return (
       <div className="loading">
+        <div>(:3 っ)っ</div>
         <Typewriter
           options={{
             cursor: "",
@@ -162,10 +188,10 @@ class Loading extends React.Component {
           }}
           onInit={(typewriter) => {
             typewriter
-              .typeString("ちょっと待って！")
+              .typeString(t("loading.normal"))
               .pauseFor(500)
               .deleteAll()
-              .typeString("今しばらくお待ちください。")
+              .typeString(t("loading.polite"))
               .pauseFor(500)
               .deleteAll()
               .start();
@@ -177,3 +203,6 @@ class Loading extends React.Component {
 }
 
 export default App;
+const KeigoConverterT = withTranslation()(KeigoConverter);
+const ResultT = withTranslation()(Result);
+const LoadingT = withTranslation()(Loading);

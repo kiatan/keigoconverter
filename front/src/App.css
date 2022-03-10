@@ -184,6 +184,7 @@ input.check-toggle-round-flat:checked + label:after {
 
 .loading {
   margin-top: 30px;
+  line-height: 2;
 }
 
 .loading-text {
