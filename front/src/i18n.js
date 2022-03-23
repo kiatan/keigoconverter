@@ -27,10 +27,14 @@ i18n
           input: "Type your word here",
           result: {
             show: "Convert to Keigo",
+            sample_sentences: "Sample Sentences:",
             not_found: {
               title: "Sorry, your input is not found in our database (｡╯︵╰｡)",
               command:
                 "Please try again with a different word or submit to our database.",
+            },
+            plain: {
+              title: "Plain Form",
             },
             sonkeigo: {
               title: "Honorific Form",
@@ -58,11 +62,15 @@ i18n
           input: "言葉を入力してください",
           result: {
             show: "切り替える",
+            sample_sentences: "例文",
             not_found: {
               title:
                 "申し訳ありませんが、入力はデータベースに見つかりません (｡╯︵╰｡)",
               command:
                 "別の言葉でもう一度試すか、データベースに送信してください。",
+            },
+            plain: {
+              title: "普通",
             },
             sonkeigo: {
               title: "尊敬語",

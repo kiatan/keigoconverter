@@ -29,7 +29,6 @@ function App() {
                   ? Object.keys(lngs)[1]
                   : Object.keys(lngs)[0]
               );
-              console.log(i18n.resolvedLanguage);
             }}
             defaultChecked={i18n.resolvedLanguage === Object.keys(lngs)[0]}
           />
@@ -64,7 +63,8 @@ class KeigoConverter extends React.Component {
     this.setState((prevState) => ({
       isShowResult: !prevState.isShowResult,
       // apiResponse: [], // getKeigoDictionaries()
-      apiResponse: notFound, // getKeigoDictionaries()
+      // apiResponse: notFound, // getKeigoDictionaries()
+      apiResponse: exactVerb,
     }));
   }
 
@@ -87,8 +87,8 @@ class KeigoConverter extends React.Component {
             value={t("result.show")}
           />
         </form>
-        <LoadingT />
-        <div className="result">
+        {/* <LoadingT /> */}
+        <div className="results">
           <ResultT
             isShowResult={this.state.isShowResult}
             data={this.state.apiResponse}
@@ -108,19 +108,111 @@ class Result extends React.Component {
       teineigo: keigo[0].teineigo,
     };
   }
+
+  buildSentenceDOM(word_sentence, language) {
+    var sentenceDOM = [];
+    const className = word_sentence.form + "-sentence word-sentence-sentence";
+    for (const [index, sentence] of word_sentence.sentences.entries()) {
+      if (language === "en") {
+        sentenceDOM.push(
+          <li key={index} className={className}>
+            <div>{sentence.sentence_ja}</div>
+            <div>{sentence.sentence_en}</div>
+          </li>
+        );
+      } else {
+        sentenceDOM.push(
+          <li key={index} className={className}>
+            <div>{sentence.sentence_ja}</div>
+          </li>
+        );
+      }
+    }
+    return sentenceDOM;
+  }
+
   render() {
     const { t } = this.props;
 
     if (!this.props.isShowResult) return null;
 
     if (this.props.data) {
-      if (this.props.data.length === 1) {
-        if (this.props.data[0].word_type === "not_found") {
+      for (const data of this.props.data) {
+        if (data.word_type === "not_found") {
           return (
             <div className="not-found">
               {t("result.not_found.title")}
               <br></br>
               {t("result.not_found.command")}
+            </div>
+          );
+        }
+
+        if (data.word_type === "exact_verb") {
+          const plain = data.word_sentences.find((plain) => {
+            return plain.form === "plain";
+          });
+          const polite = data.word_sentences.find((polite) => {
+            return polite.form === "polite";
+          });
+          const honorific = data.word_sentences.find((honorific) => {
+            return honorific.form === "honorific";
+          });
+          const humble = data.word_sentences.find((humble) => {
+            return humble.form === "humble";
+          });
+
+          var plain_sentences = this.buildSentenceDOM(plain, this.props.i18n.language);
+          var humble_sentences = this.buildSentenceDOM(humble, this.props.i18n.language);
+          var honorific_sentences = this.buildSentenceDOM(honorific, this.props.i18n.language);
+          var polite_sentences = this.buildSentenceDOM(polite, this.props.i18n.language);
+
+          // TODO: handle if the person inputs non-plain or plain --> just show all
+          // TODO: handle English/Japanese mode
+          return (
+            <div className="result">
+              <div className="word-sentence">
+                <div className="word-sentence-title">
+                  {t("result.plain.title")}
+                </div>
+                <div className="word-sentence-word">{plain.word}</div>
+                <div className="sentences-label">
+                  {t("result.sample_sentences")}
+                </div>
+                <ol className="word-sentence-sentences">{plain_sentences}</ol>
+              </div>
+              <div className="word-sentence">
+                <div className="word-sentence-title">
+                  {t("result.sonkeigo.title")}
+                </div>
+                <div className="word-sentence-word">{honorific.word}</div>
+                <div className="sentences-label">
+                  {t("result.sample_sentences")}
+                </div>
+                <ol className="word-sentence-sentences">
+                  {honorific_sentences}
+                </ol>
+              </div>
+              <div className="word-sentence">
+                <div className="word-sentence-title">
+                  {t("result.kenjougo.title")}
+                </div>
+                <div className="word-sentence-word">{humble.word}</div>
+                <div className="sentences-label">
+                  {t("result.sample_sentences")}
+                </div>
+                <ol className="word-sentence-sentences">{humble_sentences}</ol>
+              </div>
+              <div className="word-sentence">
+                <div className="word-sentence-title">
+                  {t("result.teineigo.title")}
+                </div>
+                <div className="word-sentence-word">{polite.word}</div>
+                <div className="sentences-label">
+                  {t("result.sample_sentences")}
+                </div>
+                <ol className="word-sentence-sentences">{polite_sentences}</ol>
+              </div>
             </div>
           );
         }
@@ -131,13 +223,13 @@ class Result extends React.Component {
       <div>
         <h2>{t("result.sonkeigo.title")}</h2>
         <div>{this.state.sonkeigo.word}</div>
-        <div>{this.state.sonkeigo.sentence_jp}</div>
+        <div>{this.state.sonkeigo.sentence_ja}</div>
         <h2>{t("result.kenjougo.title")}</h2>
         <div>{this.state.kenjougo.word}</div>
-        <div>{this.state.kenjougo.sentence_jp}</div>
+        <div>{this.state.kenjougo.sentence_ja}</div>
         <h2>{t("result.teineigo.title")}</h2>
         <div>{this.state.teineigo.word}</div>
-        <div>{this.state.teineigo.sentence_jp}</div>
+        <div>{this.state.teineigo.sentence_ja}</div>
       </div>
     );
   }
@@ -148,17 +240,73 @@ const keigo = [
     plain: "する",
     sonkeigo: {
       word: "なさる",
-      sentence_jp:
+      sentence_ja:
         "明日より熊本に出張なさるとのことで、お気をつけて行ってらっしゃいませ",
     },
     kenjougo: {
       word: "いたす",
-      sentence_jp: "明日、お電話いたします",
+      sentence_ja: "明日、お電話いたします",
     },
     teineigo: {
       word: "なさる",
-      sentence_jp: "体調不良の方が多いため、本日の会議はリスケします",
+      sentence_ja: "体調不良の方が多いため、本日の会議はリスケします",
     },
+  },
+];
+
+const exactVerb = [
+  {
+    word_type: "exact_verb",
+    meaning: "",
+    word_sentences: [
+      {
+        form: "plain",
+        word: "する",
+        sentences: [
+          {
+            sentence_ja: "するsentence_ja",
+            sentence_en: "するsentence_en",
+          },
+        ],
+      },
+      {
+        form: "polite",
+        word: "いたす",
+        sentences: [
+          {
+            sentence_ja: "明日、お電話いたします",
+            sentence_en: "I'll call you tomorrow",
+          },
+          {
+            sentence_ja: "明日、お電話いたします2",
+            sentence_en: "I'll call you tomorrow2",
+          },
+        ],
+      },
+      {
+        form: "honorific",
+        word: "なさる",
+        sentences: [
+          {
+            sentence_ja:
+              "明日より熊本に出張なさるとのことで、お気をつけて行ってらっしゃいませ",
+            sentence_en:
+              "I heard that you will be on a business trip to Kumamoto from tomorrow, so please be careful.",
+          },
+        ],
+      },
+      {
+        form: "humble",
+        word: "なさる",
+        sentences: [
+          {
+            sentence_ja: "体調不良の方が多いため、本日の会議はリスケします",
+            sentence_en:
+              "Today's meeting will be rescheduled because there are many people who are not feeling well.",
+          },
+        ],
+      },
+    ],
   },
 ];
 
@@ -171,7 +319,6 @@ const notFound = [
 ];
 
 class Loading extends React.Component {
-  
   render() {
     const { t } = this.props;
 
