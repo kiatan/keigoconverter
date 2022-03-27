@@ -86,6 +86,40 @@ form {
 }
 
 .word-sentence-title {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black;
+}
+
+.word-sentence-title .word-sentence-description {
+  visibility: hidden;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+  bottom: 150%;
+  left: 50%;
+  margin-left: -125px;
+  opacity: 0.75;
+  min-width: 250px;
+}
+
+.word-sentence-title .word-sentence-description::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: black transparent transparent transparent;
+}
+
+.word-sentence-title:hover .word-sentence-description {
+  visibility: visible;
 }
 
 .word-sentence-word {

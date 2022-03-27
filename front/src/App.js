@@ -102,11 +102,6 @@ class KeigoConverter extends React.Component {
 class Result extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
-      sonkeigo: keigo[0].sonkeigo,
-      kenjougo: keigo[0].kenjougo,
-      teineigo: keigo[0].teineigo,
-    };
   }
 
   buildSentenceDOM(word_sentence, language) {
@@ -137,9 +132,10 @@ class Result extends React.Component {
     if (!this.props.isShowResult) return null;
 
     if (this.props.data) {
+      let ret = [];
       for (const data of this.props.data) {
         if (data.word_type === "not_found") {
-          return (
+          ret = (
             <div className="not-found">
               {t("result.not_found.title")}
               <br></br>
@@ -162,18 +158,31 @@ class Result extends React.Component {
             return humble.form === "humble";
           });
 
-          var plain_sentences = this.buildSentenceDOM(plain, this.props.i18n.language);
-          var humble_sentences = this.buildSentenceDOM(humble, this.props.i18n.language);
-          var honorific_sentences = this.buildSentenceDOM(honorific, this.props.i18n.language);
-          var polite_sentences = this.buildSentenceDOM(polite, this.props.i18n.language);
+          var plain_sentences = this.buildSentenceDOM(
+            plain,
+            this.props.i18n.language
+          );
+          var humble_sentences = this.buildSentenceDOM(
+            humble,
+            this.props.i18n.language
+          );
+          var honorific_sentences = this.buildSentenceDOM(
+            honorific,
+            this.props.i18n.language
+          );
+          var polite_sentences = this.buildSentenceDOM(
+            polite,
+            this.props.i18n.language
+          );
 
-          // TODO: handle if the person inputs non-plain or plain --> just show all
-          // TODO: handle English/Japanese mode
-          return (
+          ret.push(
             <div className="result">
               <div className="word-sentence">
                 <div className="word-sentence-title">
                   {t("result.plain.title")}
+                  <span className="word-sentence-description">
+                    {t("result.plain.description")}
+                  </span>
                 </div>
                 <div className="word-sentence-word">{plain.word}</div>
                 <div className="sentences-label">
@@ -184,6 +193,9 @@ class Result extends React.Component {
               <div className="word-sentence">
                 <div className="word-sentence-title">
                   {t("result.sonkeigo.title")}
+                  <span className="word-sentence-description">
+                    {t("result.sonkeigo.description")}
+                  </span>
                 </div>
                 <div className="word-sentence-word">{honorific.word}</div>
                 <div className="sentences-label">
@@ -196,6 +208,9 @@ class Result extends React.Component {
               <div className="word-sentence">
                 <div className="word-sentence-title">
                   {t("result.kenjougo.title")}
+                  <span className="word-sentence-description">
+                    {t("result.kenjougo.description")}
+                  </span>
                 </div>
                 <div className="word-sentence-word">{humble.word}</div>
                 <div className="sentences-label">
@@ -206,6 +221,9 @@ class Result extends React.Component {
               <div className="word-sentence">
                 <div className="word-sentence-title">
                   {t("result.teineigo.title")}
+                  <span className="word-sentence-description">
+                    {t("result.teineigo.description")}
+                  </span>
                 </div>
                 <div className="word-sentence-word">{polite.word}</div>
                 <div className="sentences-label">
@@ -217,19 +235,15 @@ class Result extends React.Component {
           );
         }
       }
+
+      return ret;
     }
 
     return (
-      <div>
-        <h2>{t("result.sonkeigo.title")}</h2>
-        <div>{this.state.sonkeigo.word}</div>
-        <div>{this.state.sonkeigo.sentence_ja}</div>
-        <h2>{t("result.kenjougo.title")}</h2>
-        <div>{this.state.kenjougo.word}</div>
-        <div>{this.state.kenjougo.sentence_ja}</div>
-        <h2>{t("result.teineigo.title")}</h2>
-        <div>{this.state.teineigo.word}</div>
-        <div>{this.state.teineigo.sentence_ja}</div>
+      <div className="not-found">
+        {t("result.not_found.title")}
+        <br></br>
+        {t("result.not_found.command")}
       </div>
     );
   }
@@ -255,6 +269,59 @@ const keigo = [
 ];
 
 const exactVerb = [
+  {
+    word_type: "exact_verb",
+    meaning: "",
+    word_sentences: [
+      {
+        form: "plain",
+        word: "する",
+        sentences: [
+          {
+            sentence_ja: "するsentence_ja",
+            sentence_en: "するsentence_en",
+          },
+        ],
+      },
+      {
+        form: "polite",
+        word: "いたす",
+        sentences: [
+          {
+            sentence_ja: "明日、お電話いたします",
+            sentence_en: "I'll call you tomorrow",
+          },
+          {
+            sentence_ja: "明日、お電話いたします2",
+            sentence_en: "I'll call you tomorrow2",
+          },
+        ],
+      },
+      {
+        form: "honorific",
+        word: "なさる",
+        sentences: [
+          {
+            sentence_ja:
+              "明日より熊本に出張なさるとのことで、お気をつけて行ってらっしゃいませ",
+            sentence_en:
+              "I heard that you will be on a business trip to Kumamoto from tomorrow, so please be careful.",
+          },
+        ],
+      },
+      {
+        form: "humble",
+        word: "なさる",
+        sentences: [
+          {
+            sentence_ja: "体調不良の方が多いため、本日の会議はリスケします",
+            sentence_en:
+              "Today's meeting will be rescheduled because there are many people who are not feeling well.",
+          },
+        ],
+      },
+    ],
+  },
   {
     word_type: "exact_verb",
     meaning: "",
