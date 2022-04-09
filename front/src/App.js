@@ -62,9 +62,10 @@ class KeigoConverter extends React.Component {
     event.preventDefault();
     this.setState((prevState) => ({
       isShowResult: !prevState.isShowResult,
-      // apiResponse: [], // getKeigoDictionaries()
-      // apiResponse: notFound, // getKeigoDictionaries()
-      apiResponse: exactVerb,
+      // apiResponse: [],
+      // apiResponse: notFound,
+      // apiResponse: exactVerb,
+      apiResponse: exactBikago,
     }));
   }
 
@@ -234,6 +235,26 @@ class Result extends React.Component {
             </div>
           );
         }
+
+        if (data.word_type === "exact_bikago") {
+          const polite = data.word_sentences.find((polite) => {
+            return polite.form === "polite";
+          });
+
+          ret.push(
+            <div className="result">
+              <div className="word-sentence">
+                <div className="word-sentence-title">
+                  {t("result.bikago.title")}
+                  <span className="word-sentence-description">
+                    {t("result.bikago.description")}
+                  </span>
+                </div>
+                <div className="word-sentence-word">{polite.word}</div>
+              </div>
+            </div>
+          );
+        }
       }
 
       return ret;
@@ -248,25 +269,6 @@ class Result extends React.Component {
     );
   }
 }
-
-const keigo = [
-  {
-    plain: "する",
-    sonkeigo: {
-      word: "なさる",
-      sentence_ja:
-        "明日より熊本に出張なさるとのことで、お気をつけて行ってらっしゃいませ",
-    },
-    kenjougo: {
-      word: "いたす",
-      sentence_ja: "明日、お電話いたします",
-    },
-    teineigo: {
-      word: "なさる",
-      sentence_ja: "体調不良の方が多いため、本日の会議はリスケします",
-    },
-  },
-];
 
 const exactVerb = [
   {
@@ -372,6 +374,23 @@ const exactVerb = [
               "Today's meeting will be rescheduled because there are many people who are not feeling well.",
           },
         ],
+      },
+    ],
+  },
+];
+
+const exactBikago = [
+  {
+    word_type: "exact_bikago",
+    meaning: "",
+    word_sentences: [
+      {
+        form: "plain",
+        word: "家族",
+      },
+      {
+        form: "polite",
+        word: "ご家族",
       },
     ],
   },
