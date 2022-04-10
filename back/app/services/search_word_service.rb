@@ -7,6 +7,22 @@ class SearchWordService
     include Api
     include Repository
 
+    # search word sheet by sheet
+    def search_word(given_word)
+        search_verb_results = search_verb(given_word)
+
+        if search_verb_results.nil? || search_verb_results.empty?
+            search_elegant_speech_results = search_elegant_speech(given_word)
+            if search_elegant_speech_results.nil? || search_elegant_speech_results.empty?
+                return []
+            else
+                return search_elegant_speech_results
+            end
+        else
+            return search_verb_results
+        end
+    end
+
     # Search given word in verb_exact_match
     def search_verb(given_word)
         results = []
@@ -28,7 +44,7 @@ class SearchWordService
             
         found_verbs.each do |verb|
             new_keigo_dictionary = Api::KeigoDictionaryModel .new(
-                word_type: "exact_verb",
+                word_type: verb.word_type,
                 word_sentences: [
                     Api::WordSentenceModel .new(
                         form: verb.word_form,
@@ -55,9 +71,8 @@ class SearchWordService
                         )
                     )
                 end 
+                results.append(new_keigo_dictionary)
             end
-
-            results.append(new_keigo_dictionary)
         end
 
         return results
@@ -72,5 +87,57 @@ class SearchWordService
         end
 
         return result
+    end
+
+    # Search given word in elegant_speech
+    def search_elegant_speech(given_word)
+        results = []
+        
+        # Get all the elegant speech from Sheet
+        word_repository = WordRepository .new
+        bikagos = word_repository.get_elegant_speech_list
+
+        # Search for given word
+        found_bikagos = bikagos.select {|word| word.word_content == given_word}
+
+        # If given word is not found return empty array
+        if found_bikagos.nil? || found_bikagos.empty?
+            return results
+        end
+            
+        found_bikagos.each do |bikago|
+            new_keigo_dictionary = Api::KeigoDictionaryModel .new(
+                word_type: bikago.word_type,
+                word_sentences: [
+                    Api::WordSentenceModel .new(
+                        form: bikago.word_form,
+                        word: bikago.word_content,
+                        sentences: []
+                    )
+                ],
+                meaning: ""
+            )
+            
+            # Search all the related elegant speech (in different form) to the given word and do not get same content again
+            related_bikagos = bikagos.select { |related_bikago| related_bikago.sheet_row == bikago.sheet_row && related_bikago.word_content != bikago.word_content}
+
+            if related_bikagos.nil? || related_bikagos.empty?
+                results.append(new_keigo_dictionary)
+                next
+            else
+                related_bikagos.each do |related_bikago|
+                    new_keigo_dictionary.word_sentences.append(
+                        Api::WordSentenceModel .new(
+                            form: related_bikago.word_form,
+                            word: related_bikago.word_content,
+                            sentences: []
+                        )
+                    )
+                end 
+                results.append(new_keigo_dictionary)
+            end            
+        end
+
+        return results
     end
 end
