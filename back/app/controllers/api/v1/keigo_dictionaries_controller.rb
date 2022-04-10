@@ -19,7 +19,7 @@ class Api::V1::KeigoDictionariesController < ApplicationController
       meaning: "")
 
     service = SearchWordService .new
-    search_results = service.search_verb(@param_word)
+    search_results = service.search_word(@param_word)
 
     if search_results.nil? || search_results.empty?
       render json: [not_found], status: 200

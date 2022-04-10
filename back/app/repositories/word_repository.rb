@@ -19,20 +19,29 @@ class WordRepository
 
     # Get verb_exact_match sheet from column A(row 1) to column E(row 200)
     def get_verb_exact_match
-        spreadsheet_id = "14mOAb85PpFOkJkO4fy82LOj1XdArpBgls-wbHZTnCaE"
+        spreadsheet_id = "1RBv4g3Xu6hzzvL1Byj-wh7r0V6PHSjwZZD5OSRC9S-s"
         range = "verb_exact_match!A1:E200"
         service = get_sheet_service
     
-        return service.get_spreadsheet_values(spreadsheet_id, range)
+        return service.get_spreadsheet_values(spreadsheet_id, range).values
     end
 
     # Get verb_exact_match sheet from column A(row 1) to column C(row 500)
     def get_exact_match_sentence
-        spreadsheet_id = "14mOAb85PpFOkJkO4fy82LOj1XdArpBgls-wbHZTnCaE"
+        spreadsheet_id = "1RBv4g3Xu6hzzvL1Byj-wh7r0V6PHSjwZZD5OSRC9S-s"
         range = "exact_match_sentence!A1:C500"
         service = get_sheet_service
     
-        return service.get_spreadsheet_values(spreadsheet_id, range)
+        return service.get_spreadsheet_values(spreadsheet_id, range).values
+    end
+
+    # Get elegant_speech from column A*row 1) to column B(row 2000)
+    def get_elegant_speech
+        spreadsheet_id = "1RBv4g3Xu6hzzvL1Byj-wh7r0V6PHSjwZZD5OSRC9S-s"
+        range = "elegant_speech!A1:B2000"
+        service = get_sheet_service
+    
+        return service.get_spreadsheet_values(spreadsheet_id, range).values
     end
 
     # Get all the collapsed values in a rows that are separated using newlines
@@ -67,11 +76,21 @@ class WordRepository
         end
     end
 
+    # Get elegeant speech that in converted into WordModel
+    def get_converted_elegant_speech(row_number, form, word)
+        return Repository::WordModel .new(
+            sheet_row: "bikago_#{row_number}",
+            word_type: "exact_bikago",
+            word_form: form,
+            word_content: word
+        )
+    end
+
     # Get list of verbs
     def get_verb_list
         converted_verb_list = []
         # Get all the values in verb_exact_match sheet 
-        raw_verb_list = get_verb_exact_match.values
+        raw_verb_list = get_verb_exact_match
 
         # return empty array if values are not founf
         if raw_verb_list.nil? || raw_verb_list.empty?
@@ -102,13 +121,12 @@ class WordRepository
             row_count += 1
         end
         
-        puts converted_verb_list
         return converted_verb_list
     end
 
     def get_sentences
         converted_sentence_list = []
-        raw_sentences =  get_exact_match_sentence.values
+        raw_sentences =  get_exact_match_sentence
 
         # return empty array if values are not founf
         if raw_sentences.nil? || raw_sentences.empty?
@@ -116,8 +134,8 @@ class WordRepository
         end
 
         raw_sentences.each do |row|
-            # Skip header row, empty row, row that contains "Continue"
-            if row[0] == "verb" || row[0] == "Continue" || row[0].present? == false then
+            # Skip header row
+            if row[0] == "verb"
                 next
             end
 
@@ -129,5 +147,35 @@ class WordRepository
         end
 
         return converted_sentence_list
+    end
+
+    def get_elegant_speech_list
+        
+        converted_elegant_speech_list = []
+        raw_elegant_speeches = get_elegant_speech
+
+        # return empty array if values are not found
+        if raw_elegant_speeches.nil? || raw_elegant_speeches.empty?
+            return []
+        end
+
+        # Convert all elegant speech into WordModel through loop
+        row_count = 1
+        raw_elegant_speeches.each do |row|
+            # Skip header row, row that contains "つく固有名詞"
+            if row[0] == "root" || row[0] == "つく固有名詞" then
+                next
+            end
+
+            # plain
+            converted_elegant_speech_list.append(get_converted_elegant_speech(row_count, "plain", row[0]))
+
+            # polite
+            converted_elegant_speech_list.append(get_converted_elegant_speech(row_count, "polite", row[1] + row[0]))
+
+            row_count += 1
+        end
+        
+        return converted_elegant_speech_list
     end
 end   
