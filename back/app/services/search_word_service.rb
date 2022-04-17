@@ -9,18 +9,26 @@ class SearchWordService
 
     # search word sheet by sheet
     def search_word(given_word)
+        # search in verbs
         search_verb_results = search_verb(given_word)
-
-        if search_verb_results.nil? || search_verb_results.empty?
-            search_elegant_speech_results = search_elegant_speech(given_word)
-            if search_elegant_speech_results.nil? || search_elegant_speech_results.empty?
-                return []
-            else
-                return search_elegant_speech_results
-            end
-        else
+        unless search_verb_results.nil? || search_verb_results.empty?
             return search_verb_results
         end
+
+        # search in bikagos
+        search_elegant_speech_results = search_elegant_speech(given_word)
+        unless search_elegant_speech_results.nil? || search_elegant_speech_results.empty?
+            return search_elegant_speech_results
+        end
+
+        # search in nouns
+        search_noun_results = search_noun(given_word)
+        unless search_noun_results.nil? || search_noun_results.empty?
+            return search_noun_results
+        end
+
+        # given_word is not found in any search, return empty array
+        return []
     end
 
     # Search given word in verb_exact_match
@@ -136,6 +144,61 @@ class SearchWordService
                 end 
                 results.append(new_keigo_dictionary)
             end            
+        end
+
+        return results
+    end
+
+    # Search given word in noun_exact_match
+    def search_noun(given_word)
+        results = []
+        
+        # Get all the nouns from Sheet
+        word_repository = WordRepository .new
+        nouns = word_repository.get_noun_list
+
+        # Get all the sentences from Sheet
+        sentences = word_repository.get_sentences
+
+        # Search for given word
+        found_nouns = nouns.select {|word| word.word_content == given_word}
+
+        # If given word is not found return empty array
+        if found_nouns.nil? || found_nouns.empty?
+            return results
+        end
+            
+        found_nouns.each do |noun|
+            new_keigo_dictionary = Api::KeigoDictionaryModel .new(
+                word_type: noun.word_type,
+                word_sentences: [
+                    Api::WordSentenceModel .new(
+                        form: noun.word_form,
+                        word: noun.word_content,
+                        sentences: search_sentences(sentences, noun.word_content)
+                    )
+                ],
+                meaning: noun.meaning
+            )
+
+            # Search all the related nouns (in different form) to the given word
+            related_nouns = nouns.select { |related_noun| related_noun.sheet_row == noun.sheet_row && related_noun.word_content != noun.word_content}
+
+            if related_nouns.nil? || related_nouns.empty?
+                results.append(new_keigo_dictionary)
+                next
+            else
+                related_nouns.each do |related_noun|
+                    new_keigo_dictionary.word_sentences.append(
+                        Api::WordSentenceModel .new(
+                            form: related_noun.word_form,
+                            word: related_noun.word_content,
+                            sentences: search_sentences(sentences, related_noun.word_content)
+                        )
+                    )
+                end 
+                results.append(new_keigo_dictionary)
+            end
         end
 
         return results
