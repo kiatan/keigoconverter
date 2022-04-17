@@ -60,15 +60,13 @@ class WordRepository
             return []
         end
 
-        if collapsed_string.include?(",\r\n")
-            return collapsed_string.split(",\r\n")
-        end
-    
-        if collapsed_string.include?("\r\n")
-            return collapsed_string.split("\r\n")
-        end
-    
-        return collapsed_string.split(",\n")
+        # replace all newline characters with comma, then remove possible duplicated comma
+        collapsed_string = collapsed_string.gsub("\r\n", ",")
+        collapsed_string = collapsed_string.gsub("\r", ",")
+        collapsed_string = collapsed_string.gsub("\n", ",")
+        collapsed_string = collapsed_string.gsub(",,", ",")
+
+        return collapsed_string.split(",")
     end
     
     # Get verb that in converted into WordModel
@@ -86,6 +84,9 @@ class WordRepository
     def add_converted_verb(converted_verb_list, raw_row, row_number, form, meaning)
         row_values = get_collapsed_row_values(raw_row)
         row_values.each do |row_value|
+            if row_value.nil? || row_value.empty?
+                next
+            end
             converted_verb_list.append(get_converted_verb(row_number, form, row_value, meaning))
         end
     end
@@ -115,6 +116,9 @@ class WordRepository
     def add_converted_noun(converted_noun_list, raw_row, row_number, form, meaning)
         row_values = get_collapsed_row_values(raw_row)
         row_values.each do |row_value|
+            if row_value.nil? || row_value.empty?
+                next
+            end
             converted_noun_list.append(get_converted_noun(row_number, form, row_value, meaning))
         end
     end

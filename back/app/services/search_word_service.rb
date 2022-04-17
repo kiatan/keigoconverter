@@ -15,17 +15,17 @@ class SearchWordService
             return search_verb_results
         end
 
-        # search in bikagos
-        search_elegant_speech_results = search_elegant_speech(given_word)
-        unless search_elegant_speech_results.nil? || search_elegant_speech_results.empty?
-            return search_elegant_speech_results
-        end
-
         # search in nouns
         search_noun_results = search_noun(given_word)
         unless search_noun_results.nil? || search_noun_results.empty?
             return search_noun_results
         end
+
+        # search in bikagos
+        search_elegant_speech_results = search_elegant_speech(given_word)
+        unless search_elegant_speech_results.nil? || search_elegant_speech_results.empty?
+            return search_elegant_speech_results
+        end       
 
         # given_word is not found in any search, return empty array
         return []
