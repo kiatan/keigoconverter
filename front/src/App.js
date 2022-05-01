@@ -65,7 +65,8 @@ class KeigoConverter extends React.Component {
       // apiResponse: [],
       // apiResponse: notFound,
       // apiResponse: exactVerb,
-      apiResponse: exactBikago,
+      // apiResponse: exactBikago,
+      apiResponse: exactNoun,
     }));
   }
 
@@ -105,20 +106,72 @@ class Result extends React.Component {
     super(props);
   }
 
+  buildWordSentenceDOM(word_sentences, language) {
+    const { t } = this.props;
+    var wordSentenceDOM = [];
+    var wordSentenceContent = [];
+
+    for (const [index, word_sentence] of word_sentences.entries()) {
+      if (!word_sentence.sentences.length) {
+        wordSentenceContent.push(
+          <div key={index + "-word-sentence"}>
+            <div className="word-sentence-word">{word_sentence.word}</div>
+            <div className="sentences-no">{t("result.no_sentences.info")}</div>
+            <div className="sentences-no">{t("result.no_sentences.contribute")}</div>
+            <div className="sentences-no-action">{t("result.no_sentences.action")}</div>
+          </div>
+        );
+      } else {
+        wordSentenceContent.push(
+          <div key={index + "-word-sentence"}>
+            <div className="word-sentence-word">{word_sentence.word}</div>
+            <div className="sentences-label">
+              {t("result.sample_sentences")}
+            </div>
+            <ol className="word-sentence-sentences">
+              {this.buildSentenceDOM(word_sentence, language)}
+            </ol>
+          </div>
+        );
+      }
+      if (index < word_sentences.length - 1)
+        wordSentenceContent.push(
+          <hr key={index + "-word-sentence" + "-hr"}></hr>
+        );
+    }
+
+    wordSentenceDOM.push(
+      <div
+        className="word-sentence"
+        key={word_sentences[0].form + "-word-sentence"}
+      >
+        <div className="word-sentence-title">
+          {t("result." + word_sentences[0].form + ".title")}
+          <span className="word-sentence-description">
+            {t("result." + word_sentences[0].form + ".description")}
+          </span>
+        </div>
+        {wordSentenceContent}
+      </div>
+    );
+
+    return wordSentenceDOM;
+  }
+
   buildSentenceDOM(word_sentence, language) {
     var sentenceDOM = [];
     const className = word_sentence.form + "-sentence word-sentence-sentence";
     for (const [index, sentence] of word_sentence.sentences.entries()) {
       if (language === "en") {
         sentenceDOM.push(
-          <li key={index} className={className}>
+          <li key={index + "-sentence"} className={className}>
             <div>{sentence.sentence_ja}</div>
             <div>{sentence.sentence_en}</div>
           </li>
         );
       } else {
         sentenceDOM.push(
-          <li key={index} className={className}>
+          <li key={index + "-sentence"} className={className}>
             <div>{sentence.sentence_ja}</div>
           </li>
         );
@@ -134,7 +187,7 @@ class Result extends React.Component {
 
     if (this.props.data) {
       let ret = [];
-      for (const data of this.props.data) {
+      for (const [index, data] of this.props.data.entries()) {
         if (data.word_type === "not_found") {
           ret = (
             <div className="not-found">
@@ -145,93 +198,42 @@ class Result extends React.Component {
           );
         }
 
-        if (data.word_type === "exact_verb") {
-          const plain = data.word_sentences.find((plain) => {
+        if (
+          data.word_type === "exact_verb" ||
+          data.word_type === "exact_noun"
+        ) {
+          const plain = data.word_sentences.filter((plain) => {
             return plain.form === "plain";
           });
-          const polite = data.word_sentences.find((polite) => {
+          const polite = data.word_sentences.filter((polite) => {
             return polite.form === "polite";
           });
-          const honorific = data.word_sentences.find((honorific) => {
+          const honorific = data.word_sentences.filter((honorific) => {
             return honorific.form === "honorific";
           });
-          const humble = data.word_sentences.find((humble) => {
+          const humble = data.word_sentences.filter((humble) => {
             return humble.form === "humble";
           });
 
-          var plain_sentences = this.buildSentenceDOM(
-            plain,
-            this.props.i18n.language
-          );
-          var humble_sentences = this.buildSentenceDOM(
-            humble,
-            this.props.i18n.language
-          );
-          var honorific_sentences = this.buildSentenceDOM(
-            honorific,
-            this.props.i18n.language
-          );
-          var polite_sentences = this.buildSentenceDOM(
-            polite,
-            this.props.i18n.language
-          );
+          var plain_sentences = plain.length
+            ? this.buildWordSentenceDOM(plain, this.props.i18n.language)
+            : null;
+          var humble_sentences = humble.length
+            ? this.buildWordSentenceDOM(humble, this.props.i18n.language)
+            : null;
+          var honorific_sentences = honorific.length
+            ? this.buildWordSentenceDOM(honorific, this.props.i18n.language)
+            : null;
+          var polite_sentences = polite.length
+            ? this.buildWordSentenceDOM(polite, this.props.i18n.language)
+            : null;
 
           ret.push(
-            <div className="result">
-              <div className="word-sentence">
-                <div className="word-sentence-title">
-                  {t("result.plain.title")}
-                  <span className="word-sentence-description">
-                    {t("result.plain.description")}
-                  </span>
-                </div>
-                <div className="word-sentence-word">{plain.word}</div>
-                <div className="sentences-label">
-                  {t("result.sample_sentences")}
-                </div>
-                <ol className="word-sentence-sentences">{plain_sentences}</ol>
-              </div>
-              <div className="word-sentence">
-                <div className="word-sentence-title">
-                  {t("result.sonkeigo.title")}
-                  <span className="word-sentence-description">
-                    {t("result.sonkeigo.description")}
-                  </span>
-                </div>
-                <div className="word-sentence-word">{honorific.word}</div>
-                <div className="sentences-label">
-                  {t("result.sample_sentences")}
-                </div>
-                <ol className="word-sentence-sentences">
-                  {honorific_sentences}
-                </ol>
-              </div>
-              <div className="word-sentence">
-                <div className="word-sentence-title">
-                  {t("result.kenjougo.title")}
-                  <span className="word-sentence-description">
-                    {t("result.kenjougo.description")}
-                  </span>
-                </div>
-                <div className="word-sentence-word">{humble.word}</div>
-                <div className="sentences-label">
-                  {t("result.sample_sentences")}
-                </div>
-                <ol className="word-sentence-sentences">{humble_sentences}</ol>
-              </div>
-              <div className="word-sentence">
-                <div className="word-sentence-title">
-                  {t("result.teineigo.title")}
-                  <span className="word-sentence-description">
-                    {t("result.teineigo.description")}
-                  </span>
-                </div>
-                <div className="word-sentence-word">{polite.word}</div>
-                <div className="sentences-label">
-                  {t("result.sample_sentences")}
-                </div>
-                <ol className="word-sentence-sentences">{polite_sentences}</ol>
-              </div>
+            <div className="result" key={index + "-result"}>
+              {plain_sentences}
+              {honorific_sentences}
+              {humble_sentences}
+              {polite_sentences}
             </div>
           );
         }
@@ -273,109 +275,71 @@ class Result extends React.Component {
 const exactVerb = [
   {
     word_type: "exact_verb",
-    meaning: "",
     word_sentences: [
       {
         form: "plain",
         word: "する",
-        sentences: [
-          {
-            sentence_ja: "するsentence_ja",
-            sentence_en: "するsentence_en",
-          },
-        ],
-      },
-      {
-        form: "polite",
-        word: "いたす",
-        sentences: [
-          {
-            sentence_ja: "明日、お電話いたします",
-            sentence_en: "I'll call you tomorrow",
-          },
-          {
-            sentence_ja: "明日、お電話いたします2",
-            sentence_en: "I'll call you tomorrow2",
-          },
-        ],
+        sentences: [],
       },
       {
         form: "honorific",
         word: "なさる",
         sentences: [
           {
+            word: "なさる",
             sentence_ja:
               "明日より熊本に出張なさるとのことで、お気をつけて行ってらっしゃいませ",
-            sentence_en:
-              "I heard that you will be on a business trip to Kumamoto from tomorrow, so please be careful.",
-          },
-        ],
-      },
-      {
-        form: "humble",
-        word: "なさる",
-        sentences: [
-          {
-            sentence_ja: "体調不良の方が多いため、本日の会議はリスケします",
-            sentence_en:
-              "Today's meeting will be rescheduled because there are many people who are not feeling well.",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    word_type: "exact_verb",
-    meaning: "",
-    word_sentences: [
-      {
-        form: "plain",
-        word: "する",
-        sentences: [
-          {
-            sentence_ja: "するsentence_ja",
-            sentence_en: "するsentence_en",
-          },
-        ],
-      },
-      {
-        form: "polite",
-        word: "いたす",
-        sentences: [
-          {
-            sentence_ja: "明日、お電話いたします",
-            sentence_en: "I'll call you tomorrow",
-          },
-          {
-            sentence_ja: "明日、お電話いたします2",
-            sentence_en: "I'll call you tomorrow2",
+            sentence_en: null,
           },
         ],
       },
       {
         form: "honorific",
-        word: "なさる",
+        word: "される",
         sentences: [
           {
+            word: "される",
             sentence_ja:
-              "明日より熊本に出張なさるとのことで、お気をつけて行ってらっしゃいませ",
-            sentence_en:
-              "I heard that you will be on a business trip to Kumamoto from tomorrow, so please be careful.",
+              "明日より熊本に出張されるとのことで、お気をつけて行ってらっしゃいませ",
+            sentence_en: null,
           },
         ],
       },
       {
         form: "humble",
-        word: "なさる",
+        word: "いたす",
         sentences: [
           {
-            sentence_ja: "体調不良の方が多いため、本日の会議はリスケします",
-            sentence_en:
-              "Today's meeting will be rescheduled because there are many people who are not feeling well.",
+            word: "いたす",
+            sentence_ja: "明日、お電話いたします",
+            sentence_en: null,
+          },
+        ],
+      },
+      {
+        form: "humble",
+        word: "させていただく",
+        sentences: [
+          {
+            word: "させていただく",
+            sentence_ja: "明日、お電話させていただきます",
+            sentence_en: null,
+          },
+        ],
+      },
+      {
+        form: "polite",
+        word: "します",
+        sentences: [
+          {
+            word: "します",
+            sentence_ja: "明日より熊本に出張します",
+            sentence_en: null,
           },
         ],
       },
     ],
+    meaning: null,
   },
 ];
 
@@ -393,6 +357,75 @@ const exactBikago = [
         word: "ご家族",
       },
     ],
+  },
+];
+
+const exactNoun = [
+  {
+    word_type: "exact_noun",
+    word_sentences: [
+      {
+        form: "honorific",
+        word: "貴紙",
+        sentences: [
+          {
+            word: "貴紙",
+            sentence_ja:
+              "貴紙平成○○年○○月○○日付朝刊に掲載されました「○○」の記事の中の○○の記載につきまして…",
+            sentence_en: null,
+          },
+        ],
+      },
+      {
+        form: "plain",
+        word: "\n雑誌",
+        sentences: [],
+      },
+      {
+        form: "humble",
+        word: "弊紙",
+        sentences: [],
+      },
+      {
+        form: "humble",
+        word: "小紙",
+        sentences: [],
+      },
+    ],
+    meaning: null,
+  },
+  {
+    word_type: "exact_noun",
+    word_sentences: [
+      {
+        form: "honorific",
+        word: "貴紙",
+        sentences: [
+          {
+            word: "貴紙",
+            sentence_ja:
+              "貴紙平成○○年○○月○○日付朝刊に掲載されました「○○」の記事の中の○○の記載につきまして…",
+            sentence_en: null,
+          },
+        ],
+      },
+      {
+        form: "plain",
+        word: "新聞",
+        sentences: [],
+      },
+      {
+        form: "humble",
+        word: "弊紙",
+        sentences: [],
+      },
+      {
+        form: "humble",
+        word: "小紙",
+        sentences: [],
+      },
+    ],
+    meaning: null,
   },
 ];
 
