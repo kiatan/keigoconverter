@@ -66,7 +66,8 @@ class KeigoConverter extends React.Component {
       // apiResponse: notFound,
       // apiResponse: exactVerb,
       // apiResponse: exactBikago,
-      apiResponse: exactNoun,
+      // apiResponse: exactNoun,
+      apiResponse: formulaVerb,
     }));
   }
 
@@ -106,19 +107,29 @@ class Result extends React.Component {
     super(props);
   }
 
-  buildWordSentenceDOM(word_sentences, language) {
+  buildWordSentenceDOM(word_type, word_sentences, language) {
     const { t } = this.props;
     var wordSentenceDOM = [];
     var wordSentenceContent = [];
 
     for (const [index, word_sentence] of word_sentences.entries()) {
-      if (!word_sentence.sentences.length) {
+      if (!word_sentence.sentences.length && word_type != "formula_verb") {
         wordSentenceContent.push(
           <div key={index + "-word-sentence"}>
             <div className="word-sentence-word">{word_sentence.word}</div>
             <div className="sentences-no">{t("result.no_sentences.info")}</div>
-            <div className="sentences-no">{t("result.no_sentences.contribute")}</div>
-            <div className="sentences-no-action">{t("result.no_sentences.action")}</div>
+            <div className="sentences-no">
+              {t("result.no_sentences.contribute")}
+            </div>
+            <div className="sentences-no-action">
+              {t("result.no_sentences.action")}
+            </div>
+          </div>
+        );
+      } else if (word_type == "formula_verb") {
+        wordSentenceContent.push(
+          <div key={index + "-word-sentence"}>
+            <div className="word-sentence-word">{word_sentence.word}</div>
           </div>
         );
       } else {
@@ -200,7 +211,8 @@ class Result extends React.Component {
 
         if (
           data.word_type === "exact_verb" ||
-          data.word_type === "exact_noun"
+          data.word_type === "exact_noun" ||
+          data.word_type === "formula_verb"
         ) {
           const plain = data.word_sentences.filter((plain) => {
             return plain.form === "plain";
@@ -216,16 +228,32 @@ class Result extends React.Component {
           });
 
           var plain_sentences = plain.length
-            ? this.buildWordSentenceDOM(plain, this.props.i18n.language)
+            ? this.buildWordSentenceDOM(
+                data.word_type,
+                plain,
+                this.props.i18n.language
+              )
             : null;
           var humble_sentences = humble.length
-            ? this.buildWordSentenceDOM(humble, this.props.i18n.language)
+            ? this.buildWordSentenceDOM(
+                data.word_type,
+                humble,
+                this.props.i18n.language
+              )
             : null;
           var honorific_sentences = honorific.length
-            ? this.buildWordSentenceDOM(honorific, this.props.i18n.language)
+            ? this.buildWordSentenceDOM(
+                data.word_type,
+                honorific,
+                this.props.i18n.language
+              )
             : null;
           var polite_sentences = polite.length
-            ? this.buildWordSentenceDOM(polite, this.props.i18n.language)
+            ? this.buildWordSentenceDOM(
+                data.word_type,
+                polite,
+                this.props.i18n.language
+              )
             : null;
 
           ret.push(
@@ -357,6 +385,45 @@ const exactBikago = [
         word: "ご家族",
       },
     ],
+  },
+];
+
+const formulaVerb = [
+  {
+    word_type: "formula_verb",
+    word_sentences: [
+      {
+        form: "plain",
+        word: "する",
+        sentences: [],
+      },
+      {
+        form: "honorific",
+        word: "なさる",
+        sentences: [],
+      },
+      {
+        form: "humble",
+        word: "いたす",
+        sentences: [],
+      },
+      {
+        form: "humble",
+        word: "いたす2",
+        sentences: [],
+      },
+      {
+        form: "polite",
+        word: "します",
+        sentences: [],
+      },
+      {
+        form: "polite",
+        word: "します2",
+        sentences: [],
+      },
+    ],
+    meaning: null,
   },
 ];
 
