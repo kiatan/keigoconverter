@@ -3,6 +3,13 @@ import "./App.css";
 import React from "react";
 import Typewriter from "typewriter-effect";
 import { useTranslation, withTranslation } from "react-i18next";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
 
 const lngs = {
   en: { nativeName: "English" },
@@ -64,10 +71,10 @@ class KeigoConverter extends React.Component {
       isShowResult: !prevState.isShowResult,
       // apiResponse: [],
       // apiResponse: notFound,
-      // apiResponse: exactVerb,
+      apiResponse: exactVerb,
       // apiResponse: exactBikago,
       // apiResponse: exactNoun,
-      apiResponse: formulaVerb,
+      // apiResponse: formulaVerb,
     }));
   }
 
@@ -122,7 +129,7 @@ class Result extends React.Component {
               {t("result.no_sentences.contribute")}
             </div>
             <div className="sentences-no-action">
-              {t("result.no_sentences.action")}
+              <FormDialogT wordSentence={word_sentence} />
             </div>
           </div>
         );
@@ -300,6 +307,148 @@ class Result extends React.Component {
   }
 }
 
+class FormDialog extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      open: false,
+      setOpen: false,
+      requestBody: {
+        form: this.props.wordSentence.form,
+        word: this.props.wordSentence.word,
+        sentences: [],
+      },
+      sentences: [],
+    };
+
+    this.handleClickOpen = this.handleClickOpen.bind(this);
+    this.handleClose = this.handleClose.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleAdd = this.handleAdd.bind(this);
+    this.handleRemove = this.handleRemove.bind(this);
+  }
+
+  handleClickOpen() {
+    this.setState({
+      open: true,
+    });
+  }
+
+  handleClose() {
+    console.log("handleClose");
+    this.setState({
+      open: false,
+    });
+  }
+
+  handleAdd() {
+
+  }
+
+  handleRemove() {
+
+  }
+
+  handleSubmit(event) {
+    event.preventDefault();
+    console.log("handleSubmit: ");
+    console.log(event);
+
+    let sentences = [];
+
+    if (this.props.i18n.language == "en") {
+      console.log("english mode");
+      for (let i = 0; i < event.target.length - 3; i += 2) {
+        // I don't know why 3, but buttons seem to be included in the form (3 buttons: add, cancel, submit)
+        console.log("ja:" + event.target[i].value);
+        console.log("en:" + event.target[i + 1].value);
+        const sentence = {
+          word: this.props.wordSentence.word,
+          sentence_ja: event.target[i].value,
+          sentence_en: event.target[i + 1].value
+        };
+       
+        this.state.requestBody.sentences.push(sentence);
+      }
+    } else {
+      console.log("japanese mode");
+      for (let i = 0; i < event.target.length - 3; i++) {
+        console.log("ja:" + event.target[i].value);
+        const sentence = {
+          word: this.props.wordSentence.word,
+          sentence_ja: event.target[i].value,
+          sentence_en: ""
+        };
+        this.state.requestBody.sentences.push(sentence);
+      }
+    }
+
+    console.log("new request body");
+    console.log(this.state.requestBody);
+
+    this.handleClose();
+  }
+
+  render() {
+    const { t } = this.props;
+
+    let ret = [];
+
+    let sentence_en = (
+      <TextField
+        autoFocus
+        margin="dense"
+        id="name"
+        label={t("result.no_sentences.sentence_en")}
+        fullWidth
+        variant="standard"
+      />
+    );
+
+    ret.push(
+      <div key="submit-sentence">
+        <Button variant="outlined" onClick={this.handleClickOpen}>
+          {t("result.no_sentences.action")}
+        </Button>
+        <Dialog open={this.state.open} onClose={this.handleClose} fullWidth>
+          <DialogTitle> {t("result.no_sentences.action")}</DialogTitle>
+          <form onSubmit={this.handleSubmit}>
+            <DialogContent>
+              <DialogContentText>
+                {t("result.no_sentences.submit_for")}{" "}
+                {this.props.wordSentence.word}
+              </DialogContentText>
+              {/* Japanese Sentence */}
+              <TextField
+                autoFocus
+                margin="dense"
+                id="name"
+                label={t("result.no_sentences.sentence")}
+                fullWidth
+                variant="standard"
+              />
+              {/* English Sentence */}
+              {this.props.i18n.language == "en" ? sentence_en : null}
+              {/* Add Button */}
+              <Button variant="outlined" onClick={this.handleAdd}>
+                {t("result.no_sentences.another")}
+              </Button>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={this.handleClose}>
+                {t("result.no_sentences.cancel")}
+              </Button>
+              <Button type="submit">{t("result.no_sentences.submit")}</Button>
+            </DialogActions>
+          </form>
+        </Dialog>
+      </div>
+    );
+
+    return ret;
+  }
+}
+
 const exactVerb = [
   {
     word_type: "exact_verb",
@@ -317,21 +466,14 @@ const exactVerb = [
             word: "なさる",
             sentence_ja:
               "明日より熊本に出張なさるとのことで、お気をつけて行ってらっしゃいませ",
-            sentence_en: null,
+            sentence_en: "English sentence",
           },
         ],
       },
       {
         form: "honorific",
         word: "される",
-        sentences: [
-          {
-            word: "される",
-            sentence_ja:
-              "明日より熊本に出張されるとのことで、お気をつけて行ってらっしゃいませ",
-            sentence_en: null,
-          },
-        ],
+        sentences: [],
       },
       {
         form: "humble",
@@ -539,3 +681,4 @@ export default App;
 const KeigoConverterT = withTranslation()(KeigoConverter);
 const ResultT = withTranslation()(Result);
 const LoadingT = withTranslation()(Loading);
+const FormDialogT = withTranslation()(FormDialog);
