@@ -10,6 +10,8 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 
 const lngs = {
   en: { nativeName: "English" },
@@ -120,7 +122,7 @@ class Result extends React.Component {
     var wordSentenceContent = [];
 
     for (const [index, word_sentence] of word_sentences.entries()) {
-      if (!word_sentence.sentences.length && word_type != "formula_verb") {
+      if (!word_sentence.sentences.length && word_type !== "formula_verb") {
         wordSentenceContent.push(
           <div key={index + "-word-sentence"}>
             <div className="word-sentence-word">{word_sentence.word}</div>
@@ -133,7 +135,7 @@ class Result extends React.Component {
             </div>
           </div>
         );
-      } else if (word_type == "formula_verb") {
+      } else if (word_type === "formula_verb") {
         wordSentenceContent.push(
           <div key={index + "-word-sentence"}>
             <div className="word-sentence-word">{word_sentence.word}</div>
@@ -318,7 +320,13 @@ class FormDialog extends React.Component {
         word: this.props.wordSentence.word,
         sentences: [],
       },
-      sentences: [],
+      sentences: [
+        {
+          sentence_ja: "",
+          sentence_en: "",
+          word: this.props.wordSentence.word,
+        },
+      ],
     };
 
     this.handleClickOpen = this.handleClickOpen.bind(this);
@@ -326,6 +334,7 @@ class FormDialog extends React.Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleAdd = this.handleAdd.bind(this);
     this.handleRemove = this.handleRemove.bind(this);
+    this.handleInputChange = this.handleInputChange.bind(this);
   }
 
   handleClickOpen() {
@@ -335,53 +344,56 @@ class FormDialog extends React.Component {
   }
 
   handleClose() {
-    console.log("handleClose");
     this.setState({
       open: false,
+      requestBody: {
+        // reset values
+        form: this.props.wordSentence.form,
+        word: this.props.wordSentence.word,
+        sentences: [],
+      },
+      sentences: [
+        {
+          sentence_ja: "",
+          sentence_en: "",
+          word: this.props.wordSentence.word,
+        },
+      ],
     });
   }
 
-  handleAdd() {
-
+  handleInputChange(lang, event, index) {
+    const list = [...this.state.sentences];
+    if (lang === "en") list[index].sentence_en = event.target.value;
+    else list[index].sentence_ja = event.target.value;
+    this.setState({ sentences: list });
   }
 
-  handleRemove() {
+  handleAdd() {
+    console.log("add");
+    this.setState({
+      sentences: [
+        ...this.state.sentences,
+        {
+          sentence_ja: "",
+          sentence_en: "",
+          word: this.props.wordSentence.word,
+        },
+      ],
+    });
+  }
 
+  handleRemove(index) {
+    console.log("remove");
+    const list = [...this.state.sentences];
+    list.splice(index, 1);
+    this.setState({ sentences: list });
   }
 
   handleSubmit(event) {
     event.preventDefault();
-    console.log("handleSubmit: ");
-    console.log(event);
 
-    let sentences = [];
-
-    if (this.props.i18n.language == "en") {
-      console.log("english mode");
-      for (let i = 0; i < event.target.length - 3; i += 2) {
-        // I don't know why 3, but buttons seem to be included in the form (3 buttons: add, cancel, submit)
-        console.log("ja:" + event.target[i].value);
-        console.log("en:" + event.target[i + 1].value);
-        const sentence = {
-          word: this.props.wordSentence.word,
-          sentence_ja: event.target[i].value,
-          sentence_en: event.target[i + 1].value
-        };
-       
-        this.state.requestBody.sentences.push(sentence);
-      }
-    } else {
-      console.log("japanese mode");
-      for (let i = 0; i < event.target.length - 3; i++) {
-        console.log("ja:" + event.target[i].value);
-        const sentence = {
-          word: this.props.wordSentence.word,
-          sentence_ja: event.target[i].value,
-          sentence_en: ""
-        };
-        this.state.requestBody.sentences.push(sentence);
-      }
-    }
+    this.state.requestBody.sentences = this.state.sentences;
 
     console.log("new request body");
     console.log(this.state.requestBody);
@@ -394,17 +406,6 @@ class FormDialog extends React.Component {
 
     let ret = [];
 
-    let sentence_en = (
-      <TextField
-        autoFocus
-        margin="dense"
-        id="name"
-        label={t("result.no_sentences.sentence_en")}
-        fullWidth
-        variant="standard"
-      />
-    );
-
     ret.push(
       <div key="submit-sentence">
         <Button variant="outlined" onClick={this.handleClickOpen}>
@@ -412,35 +413,79 @@ class FormDialog extends React.Component {
         </Button>
         <Dialog open={this.state.open} onClose={this.handleClose} fullWidth>
           <DialogTitle> {t("result.no_sentences.action")}</DialogTitle>
-          <form onSubmit={this.handleSubmit}>
-            <DialogContent>
-              <DialogContentText>
-                {t("result.no_sentences.submit_for")}{" "}
-                {this.props.wordSentence.word}
-              </DialogContentText>
-              {/* Japanese Sentence */}
-              <TextField
-                autoFocus
-                margin="dense"
-                id="name"
-                label={t("result.no_sentences.sentence")}
-                fullWidth
-                variant="standard"
-              />
-              {/* English Sentence */}
-              {this.props.i18n.language == "en" ? sentence_en : null}
-              {/* Add Button */}
-              <Button variant="outlined" onClick={this.handleAdd}>
-                {t("result.no_sentences.another")}
-              </Button>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={this.handleClose}>
-                {t("result.no_sentences.cancel")}
-              </Button>
-              <Button type="submit">{t("result.no_sentences.submit")}</Button>
-            </DialogActions>
-          </form>
+          <DialogContent>
+            <DialogContentText>
+              {t("result.no_sentences.submit_for")}{" "}
+              {this.props.wordSentence.word}
+            </DialogContentText>
+            {this.state.sentences.map((x, i) => {
+              return (
+                <div key={"submit-sentences-dynamic" + i}>
+                  {/* Japanese Sentence */}
+                  <TextField
+                    autoFocus={i === 0}
+                    margin="dense"
+                    id="name"
+                    label={t("result.no_sentences.sentence")}
+                    fullWidth
+                    variant="standard"
+                    onChange={(e) => this.handleInputChange("ja", e, i)}
+                    required
+                    multiline
+                  />
+                  {/* English Sentence */}
+                  {this.props.i18n.language === "en" && (
+                    <TextField
+                      margin="dense"
+                      id="name"
+                      label={t("result.no_sentences.sentence_en")}
+                      fullWidth
+                      variant="standard"
+                      value={x.sentence_en}
+                      onChange={(e) => this.handleInputChange("en", e, i)}
+                      multiline
+                    />
+                  )}
+                  <div className="add-remove-sentence-buttons">
+                    {/* Remove Button */}
+                    {this.state.sentences.length !== 1 && (
+                      <Button
+                        variant="outlined"
+                        onClick={() => this.handleRemove(i)}
+                        className="remove-sentence-button"
+                        startIcon={<DeleteIcon />}
+                      >
+                        {t("result.no_sentences.remove")}
+                      </Button>
+                    )}
+                    {/* Add Button */}
+                    {this.state.sentences.length - 1 === i && (
+                      <Button
+                        variant="outlined"
+                        onClick={this.handleAdd}
+                        className="add-sentence-button"
+                        startIcon={<AddIcon />}
+                      >
+                        {t("result.no_sentences.another")}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            {/* for debugging: printing */}
+            {/* <div style={{ marginTop: 20 }}>
+              {JSON.stringify(this.state.sentences)}
+            </div> */}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={this.handleClose}>
+              {t("result.no_sentences.cancel")}
+            </Button>
+            <Button onClick={(e) => this.handleSubmit(e)}>
+              {t("result.no_sentences.submit")}
+            </Button>
+          </DialogActions>
         </Dialog>
       </div>
     );

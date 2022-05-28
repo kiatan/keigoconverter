@@ -258,6 +258,17 @@ input.check-toggle-round-flat:checked + label:after {
   margin-left: 44px;
 }
 
+.add-remove-sentence-buttons {
+  display: flex;
+  flex-direction: column;
+  margin: 10px 0;
+  align-items: flex-end;
+}
+.add-sentence-button {
+  margin-top: 10px !important;
+  align-self: flex-start;
+}
+
 .loading {
   margin-top: 30px;
   line-height: 2;

@@ -33,11 +33,12 @@ i18n
               contribute: "Your contribution will be highly appreciated",
               action: "Submit a sentence",
               sentence: "Example sentence in Japanese",
-              sentence_en: "Optional English translation",
+              sentence_en: "(Optional) English translation",
               submit: "Submit",
               cancel: "Cancel",
               submit_for: "Write a sentence for: ",
-              another: "Add another sentence"
+              another: "Add another sentence",
+              remove: "Remove"
             },
             not_found: {
               title: "Sorry, your input is not found in our database (｡╯︵╰｡)",
@@ -94,7 +95,8 @@ i18n
               submit: "提出",
               cancel: "キャンセル",
               submit_for: "この単語: ",
-              another: "例文を追加"
+              another: "例文を追加",
+              remove: "削除"
             },
             not_found: {
               title:
