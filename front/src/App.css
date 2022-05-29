@@ -139,6 +139,10 @@ form {
   padding: 0 0 0 20px;
 }
 
+.sentences-no-action {
+  margin: 15px;
+}
+
 .word-sentence-sentence {
   text-align: left;
   line-height: 1.5;
@@ -252,6 +256,17 @@ input.check-toggle-round-flat:checked + label {
 
 input.check-toggle-round-flat:checked + label:after {
   margin-left: 44px;
+}
+
+.add-remove-sentence-buttons {
+  display: flex;
+  flex-direction: column;
+  margin: 10px 0;
+  align-items: flex-end;
+}
+.add-sentence-button {
+  margin-top: 10px !important;
+  align-self: flex-start;
 }
 
 .loading {

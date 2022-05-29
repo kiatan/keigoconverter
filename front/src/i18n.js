@@ -31,7 +31,14 @@ i18n
             no_sentences: {
               info: "Sorry, we don't have an example sentence yet for this word.",
               contribute: "Your contribution will be highly appreciated",
-              action: "Click to submit a sentence."
+              action: "Submit a sentence",
+              sentence: "Example sentence in Japanese",
+              sentence_en: "(Optional) English translation",
+              submit: "Submit",
+              cancel: "Cancel",
+              submit_for: "Write a sentence for: ",
+              another: "Add another sentence",
+              remove: "Remove"
             },
             not_found: {
               title: "Sorry, your input is not found in our database (｡╯︵╰｡)",
@@ -83,7 +90,13 @@ i18n
             no_sentences: {
               info: "申し訳ありませんが、この単語の例文はまだありません。",
               contribute: "",
-              action: "例文を提出"
+              action: "例文を提出",
+              sentence: "例文",
+              submit: "提出",
+              cancel: "キャンセル",
+              submit_for: "この単語: ",
+              another: "例文を追加",
+              remove: "削除"
             },
             not_found: {
               title:

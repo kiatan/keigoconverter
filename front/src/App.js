@@ -3,6 +3,15 @@ import "./App.css";
 import React from "react";
 import Typewriter from "typewriter-effect";
 import { useTranslation, withTranslation } from "react-i18next";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 
 const lngs = {
   en: { nativeName: "English" },
@@ -64,10 +73,10 @@ class KeigoConverter extends React.Component {
       isShowResult: !prevState.isShowResult,
       // apiResponse: [],
       // apiResponse: notFound,
-      // apiResponse: exactVerb,
+      apiResponse: exactVerb,
       // apiResponse: exactBikago,
       // apiResponse: exactNoun,
-      apiResponse: formulaVerb,
+      // apiResponse: formulaVerb,
     }));
   }
 
@@ -113,7 +122,7 @@ class Result extends React.Component {
     var wordSentenceContent = [];
 
     for (const [index, word_sentence] of word_sentences.entries()) {
-      if (!word_sentence.sentences.length && word_type != "formula_verb") {
+      if (!word_sentence.sentences.length && word_type !== "formula_verb") {
         wordSentenceContent.push(
           <div key={index + "-word-sentence"}>
             <div className="word-sentence-word">{word_sentence.word}</div>
@@ -122,11 +131,11 @@ class Result extends React.Component {
               {t("result.no_sentences.contribute")}
             </div>
             <div className="sentences-no-action">
-              {t("result.no_sentences.action")}
+              <FormDialogT wordSentence={word_sentence} />
             </div>
           </div>
         );
-      } else if (word_type == "formula_verb") {
+      } else if (word_type === "formula_verb") {
         wordSentenceContent.push(
           <div key={index + "-word-sentence"}>
             <div className="word-sentence-word">{word_sentence.word}</div>
@@ -300,6 +309,191 @@ class Result extends React.Component {
   }
 }
 
+class FormDialog extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      open: false,
+      setOpen: false,
+      requestBody: {
+        form: this.props.wordSentence.form,
+        word: this.props.wordSentence.word,
+        sentences: [],
+      },
+      sentences: [
+        {
+          sentence_ja: "",
+          sentence_en: "",
+          word: this.props.wordSentence.word,
+        },
+      ],
+    };
+
+    this.handleClickOpen = this.handleClickOpen.bind(this);
+    this.handleClose = this.handleClose.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleAdd = this.handleAdd.bind(this);
+    this.handleRemove = this.handleRemove.bind(this);
+    this.handleInputChange = this.handleInputChange.bind(this);
+  }
+
+  handleClickOpen() {
+    this.setState({
+      open: true,
+    });
+  }
+
+  handleClose() {
+    this.setState({
+      open: false,
+      requestBody: {
+        // reset values
+        form: this.props.wordSentence.form,
+        word: this.props.wordSentence.word,
+        sentences: [],
+      },
+      sentences: [
+        {
+          sentence_ja: "",
+          sentence_en: "",
+          word: this.props.wordSentence.word,
+        },
+      ],
+    });
+  }
+
+  handleInputChange(lang, event, index) {
+    const list = [...this.state.sentences];
+    if (lang === "en") list[index].sentence_en = event.target.value;
+    else list[index].sentence_ja = event.target.value;
+    this.setState({ sentences: list });
+  }
+
+  handleAdd() {
+    console.log("add");
+    this.setState({
+      sentences: [
+        ...this.state.sentences,
+        {
+          sentence_ja: "",
+          sentence_en: "",
+          word: this.props.wordSentence.word,
+        },
+      ],
+    });
+  }
+
+  handleRemove(index) {
+    console.log("remove");
+    const list = [...this.state.sentences];
+    list.splice(index, 1);
+    this.setState({ sentences: list });
+  }
+
+  handleSubmit(event) {
+    event.preventDefault();
+
+    this.state.requestBody.sentences = this.state.sentences;
+
+    console.log("new request body");
+    console.log(this.state.requestBody);
+
+    this.handleClose();
+  }
+
+  render() {
+    const { t } = this.props;
+
+    let ret = [];
+
+    ret.push(
+      <div key="submit-sentence">
+        <Button variant="outlined" onClick={this.handleClickOpen}>
+          {t("result.no_sentences.action")}
+        </Button>
+        <Dialog open={this.state.open} onClose={this.handleClose} fullWidth>
+          <DialogTitle> {t("result.no_sentences.action")}</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              {t("result.no_sentences.submit_for")}{" "}
+              {this.props.wordSentence.word}
+            </DialogContentText>
+            {this.state.sentences.map((x, i) => {
+              return (
+                <div key={"submit-sentences-dynamic" + i}>
+                  {/* Japanese Sentence */}
+                  <TextField
+                    autoFocus={i === 0}
+                    margin="dense"
+                    id="name"
+                    label={t("result.no_sentences.sentence")}
+                    fullWidth
+                    variant="standard"
+                    onChange={(e) => this.handleInputChange("ja", e, i)}
+                    required
+                    multiline
+                  />
+                  {/* English Sentence */}
+                  {this.props.i18n.language === "en" && (
+                    <TextField
+                      margin="dense"
+                      id="name"
+                      label={t("result.no_sentences.sentence_en")}
+                      fullWidth
+                      variant="standard"
+                      value={x.sentence_en}
+                      onChange={(e) => this.handleInputChange("en", e, i)}
+                      multiline
+                    />
+                  )}
+                  <div className="add-remove-sentence-buttons">
+                    {/* Remove Button */}
+                    {this.state.sentences.length !== 1 && (
+                      <Button
+                        variant="outlined"
+                        onClick={() => this.handleRemove(i)}
+                        className="remove-sentence-button"
+                        startIcon={<DeleteIcon />}
+                      >
+                        {t("result.no_sentences.remove")}
+                      </Button>
+                    )}
+                    {/* Add Button */}
+                    {this.state.sentences.length - 1 === i && (
+                      <Button
+                        variant="outlined"
+                        onClick={this.handleAdd}
+                        className="add-sentence-button"
+                        startIcon={<AddIcon />}
+                      >
+                        {t("result.no_sentences.another")}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            {/* for debugging: printing */}
+            {/* <div style={{ marginTop: 20 }}>
+              {JSON.stringify(this.state.sentences)}
+            </div> */}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={this.handleClose}>
+              {t("result.no_sentences.cancel")}
+            </Button>
+            <Button onClick={(e) => this.handleSubmit(e)}>
+              {t("result.no_sentences.submit")}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </div>
+    );
+
+    return ret;
+  }
+}
+
 const exactVerb = [
   {
     word_type: "exact_verb",
@@ -317,21 +511,14 @@ const exactVerb = [
             word: "なさる",
             sentence_ja:
               "明日より熊本に出張なさるとのことで、お気をつけて行ってらっしゃいませ",
-            sentence_en: null,
+            sentence_en: "English sentence",
           },
         ],
       },
       {
         form: "honorific",
         word: "される",
-        sentences: [
-          {
-            word: "される",
-            sentence_ja:
-              "明日より熊本に出張されるとのことで、お気をつけて行ってらっしゃいませ",
-            sentence_en: null,
-          },
-        ],
+        sentences: [],
       },
       {
         form: "humble",
@@ -539,3 +726,4 @@ export default App;
 const KeigoConverterT = withTranslation()(KeigoConverter);
 const ResultT = withTranslation()(Result);
 const LoadingT = withTranslation()(Loading);
+const FormDialogT = withTranslation()(FormDialog);
