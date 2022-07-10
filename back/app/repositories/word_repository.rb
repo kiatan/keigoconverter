@@ -35,7 +35,7 @@ class WordRepository
         return service.get_spreadsheet_values(spreadsheet_id, range).values
     end
 
-    # Get elegant_speech from column A*row 1) to column B(row 2000)
+    # Get elegant_speech from column A(row 1) to column B(row 2000)
     def get_elegant_speech
         spreadsheet_id = "1RBv4g3Xu6hzzvL1Byj-wh7r0V6PHSjwZZD5OSRC9S-s"
         range = "elegant_speech!A1:B2000"
@@ -43,13 +43,22 @@ class WordRepository
     
         return service.get_spreadsheet_values(spreadsheet_id, range).values
     end
-                
-    # Get noun_exact_macth from column A*row 1) to column D(row 100)
+
+    # Get noun_exact_match from column A(row 1) to column D(row 100)
     def get_noun_exact_match
         spreadsheet_id = "1RBv4g3Xu6hzzvL1Byj-wh7r0V6PHSjwZZD5OSRC9S-s"
         range = "noun_exact_match!A1:D100"
         service = get_sheet_service
     
+        return service.get_spreadsheet_values(spreadsheet_id, range).values
+    end
+
+    # Get verb_group1_exception from columnA(row1) to columnE(row 100)
+    def get_verb_group1_exception
+        spreadsheet_id = "1RBv4g3Xu6hzzvL1Byj-wh7r0V6PHSjwZZD5OSRC9S-s"
+        range = "verb_group1_exception!A1:E100"
+        service = get_sheet_service
+
         return service.get_spreadsheet_values(spreadsheet_id, range).values
     end
 
@@ -60,13 +69,15 @@ class WordRepository
             return []
         end
 
-        # replace all newline characters with comma, then remove possible duplicated comma
-        collapsed_string = collapsed_string.gsub("\r\n", ",")
-        collapsed_string = collapsed_string.gsub("\r", ",")
-        collapsed_string = collapsed_string.gsub("\n", ",")
-        collapsed_string = collapsed_string.gsub(",,", ",")
-
-        return collapsed_string.split(",")
+        if collapsed_string.include?(",\r\n")
+            return collapsed_string.split(",\r\n")
+        end
+    
+        if collapsed_string.include?("\r\n")
+            return collapsed_string.split("\r\n")
+        end
+    
+        return collapsed_string.split(",\n")
     end
     
     # Get verb that in converted into WordModel
@@ -84,9 +95,6 @@ class WordRepository
     def add_converted_verb(converted_verb_list, raw_row, row_number, form, meaning)
         row_values = get_collapsed_row_values(raw_row)
         row_values.each do |row_value|
-            if row_value.nil? || row_value.empty?
-                next
-            end
             converted_verb_list.append(get_converted_verb(row_number, form, row_value, meaning))
         end
     end
@@ -116,9 +124,6 @@ class WordRepository
     def add_converted_noun(converted_noun_list, raw_row, row_number, form, meaning)
         row_values = get_collapsed_row_values(raw_row)
         row_values.each do |row_value|
-            if row_value.nil? || row_value.empty?
-                next
-            end
             converted_noun_list.append(get_converted_noun(row_number, form, row_value, meaning))
         end
     end
@@ -160,7 +165,8 @@ class WordRepository
         
         return converted_verb_list
     end
-                
+
+    # Get list of sentences
     def get_sentences
         converted_sentence_list = []
         raw_sentences =  get_exact_match_sentence
@@ -185,7 +191,8 @@ class WordRepository
 
         return converted_sentence_list
     end
-                
+
+    # Get list of elegant speech
     def get_elegant_speech_list
         
         converted_elegant_speech_list = []
@@ -215,7 +222,8 @@ class WordRepository
         
         return converted_elegant_speech_list
     end
-                
+
+    # Get list of nouns
     def get_noun_list
         converted_noun_list = []
         # Get all the values in noun_exact_match sheet 
@@ -249,5 +257,42 @@ class WordRepository
         
         return converted_noun_list
     end
+
+    # Get list of exceptions of group 1 verbs
+    def get_verb_group1_exception_list
+        converted__group1_verb_list = []
+        # Get all the values in  sheet verb_group1_exception
+        raw_group1_verb_list = get_verb_group1_exception
+
+        # return empty array if values are not found
+        if raw_group1_verb_list.nil? || raw_group1_verb_list.empty?
+            return []
+        end
+
+        # Convert all verb into WordModel through loop
+        row_count = 1
+        raw_group1_verb_list.each do |row|
+            # first row is header, so skip it
+            if row_count == 1 then
+                row_count += 1
+                next
+            end
+
+            # plain
+            add_converted_verb(converted__group1_verb_list, row[0], row_count, "plain", row[4])
+
+            # honorific
+            add_converted_verb(converted__group1_verb_list, row[1], row_count, "honorific", row[4])
+
+            # humble
+            add_converted_verb(converted__group1_verb_list, row[2], row_count, "humble", row[4])
+
+            # polite
+            add_converted_verb(converted__group1_verb_list, row[3], row_count, "polite", row[4])
+
+            row_count += 1
+        end
+        
+        return converted__group1_verb_list
+    end
 end   
-                
