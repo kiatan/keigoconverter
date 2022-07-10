@@ -2,6 +2,7 @@ require './app/repositories/word_repository.rb'
 require './app/models/repository/word_model.rb'
 require './app/models/api/keigo_dictionary_model.rb'
 require './app/models/api/word_sentence_model.rb'
+require './app/services/formula_verb_service.rb'
 
 class SearchWordService
     include Api
@@ -9,10 +10,17 @@ class SearchWordService
 
     # search word sheet by sheet
     def search_word(given_word)
+
         # search in verbs
         search_verb_results = search_verb(given_word)
         unless search_verb_results.nil? || search_verb_results.empty?
             return search_verb_results
+        end
+
+        # search in bikagos
+        search_elegant_speech_results = search_elegant_speech(given_word)
+        unless search_elegant_speech_results.nil? || search_elegant_speech_results.empty?
+            return search_elegant_speech_results
         end
 
         # search in nouns
@@ -21,11 +29,11 @@ class SearchWordService
             return search_noun_results
         end
 
-        # search in bikagos
-        search_elegant_speech_results = search_elegant_speech(given_word)
-        unless search_elegant_speech_results.nil? || search_elegant_speech_results.empty?
-            return search_elegant_speech_results
-        end       
+        # search formula verbs
+        search_formula_verb_results = search_formula_verb(given_word)
+        unless search_formula_verb_results.nil? || search_formula_verb_results.empty?
+            return search_formula_verb_results
+        end
 
         # given_word is not found in any search, return empty array
         return []
@@ -202,5 +210,93 @@ class SearchWordService
         end
 
         return results
+    end
+
+    # Search given word in verb_group1_exception
+    def search_verb_group1_exception(given_word)
+        results = []
+        
+        # Get all the verbs from Sheet
+        word_repository = WordRepository .new
+        verbs = word_repository.get_verb_group1_exception_list
+
+        # Search for given word
+        found_verbs = verbs.select {|word| word.word_content == given_word}
+
+        # If given word is not found return empty array
+        if found_verbs.nil? || found_verbs.empty?
+            return results
+        end
+            
+        found_verbs.each do |verb|
+            new_keigo_dictionary = Api::KeigoDictionaryModel .new(
+                word_type: verb.word_type,
+                word_sentences: [
+                    Api::WordSentenceModel .new(
+                        form: verb.word_form,
+                        word: verb.word_content
+                    )
+                ],
+                meaning: verb.meaning
+            )
+
+            # Search all the related verbs (in different form) to the given word
+            related_verbs = verbs.select { |related_verb| related_verb.sheet_row == verb.sheet_row && related_verb.word_content != verb.word_content}
+
+            if related_verbs.nil? || related_verbs.empty?
+                results.append(new_keigo_dictionary)
+                next
+            else
+                related_verbs.each do |related_verb|
+                    new_keigo_dictionary.word_sentences.append(
+                        Api::WordSentenceModel .new(
+                            form: related_verb.word_form,
+                            word: related_verb.word_content
+                        )
+                    )
+                end 
+                results.append(new_keigo_dictionary)
+            end
+        end
+
+        return results
+    end
+
+    # Check whether if given word is a verb
+    # if it is, return the verb with other forms based on formula
+    # else, return empty result
+    def search_formula_verb(given_word)
+        formula_verb_service = FormulaVerbService .new
+
+        # check whether if given word is verb using Mecab
+        given_word_property = formula_verb_service.get_word_properties(given_word)
+
+        # if it is verb, we don't need to process anymore, simply return empty result
+        if given_word_property.type != "動詞"
+            return []
+        end
+
+        # as it is verb, check is it in group 1 verb exceptions
+        # if it is, we can simply get the other forms from database
+        result = search_verb_group1_exception(given_word)
+
+        unless result.nil? || result.empty?
+            return result
+        end
+
+        # verb is not in execption list, so get other forms using formula 
+        # try getting word conversion using group 2 verb formula
+        result = formula_verb_service.get_group2_verb(given_word_property)
+
+        unless result.nil? || result.empty?
+            return result
+        end
+
+        # try getting word conversion using group 1 verb formula
+        result = formula_verb_service.get_group1_verb(given_word_property)
+
+        # return result even if it is empty by trying out group 1 verb formula
+        # which means verb conversion using formula failed
+        return result
     end
 end
