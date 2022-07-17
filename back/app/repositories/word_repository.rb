@@ -12,7 +12,7 @@ class WordRepository
         service = Google::Apis::SheetsV4::SheetsService.new
         service.authorization = Google::Auth::ServiceAccountCredentials.make_creds(
             json_key_io: File.open('./config/credentials.json'),
-            scope: Google::Apis::SheetsV4::AUTH_SPREADSHEETS_READONLY)
+            scope: Google::Apis::SheetsV4::AUTH_SPREADSHEETS)
     
         return service
     end
@@ -60,6 +60,27 @@ class WordRepository
         service = get_sheet_service
 
         return service.get_spreadsheet_values(spreadsheet_id, range).values
+    end
+
+    # Add suggested sentences to exact_match_sentence (append new row)
+    def add_suggested_sentence(suggested_sentences)
+        spreadsheet_id = "1RBv4g3Xu6hzzvL1Byj-wh7r0V6PHSjwZZD5OSRC9S-s"
+        range = "exact_match_sentence"
+        service = get_sheet_service
+    
+        request_body = Google::Apis::SheetsV4::ValueRange.new
+
+        request_body.values = [];
+
+        suggested_sentences.sentences.each do |sentence|
+            request_body.values.append([sentence.word, sentence.sentence_ja, sentence.sentence_en])
+        end
+
+        return service.append_spreadsheet_value(spreadsheet_id, 
+            range, 
+            request_body, 
+            value_input_option: "RAW", 
+            insert_data_option: "INSERT_ROWS")
     end
 
     # Get all the collapsed values in a rows that are separated using newlines

@@ -3,3 +3,4 @@ class Repository::SentenceModel
   
     attr_accessor :word, :sentence_en, :sentence_ja
 end
+
