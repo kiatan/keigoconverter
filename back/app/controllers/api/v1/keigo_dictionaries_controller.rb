@@ -6,10 +6,7 @@ class Api::V1::KeigoDictionariesController < ApplicationController
   include Api
 
   # Get keigo word-sentences for given word 
-  def show
-    # TODO: By default return "not found" only for now. 
-    # Will be updated in later backlogs
-    
+  def show    
     # get word to be searched for from url params
     @param_word = params[:word]
     
