@@ -22,7 +22,7 @@ class Api::V1::KeigoDictionariesController < ApplicationController
     search_results = service.search_word(@param_word)
 
     if search_results.nil? || search_results.empty?
-      render json: not_found, status: 200
+      render json: [not_found], status: 404
     else
       render json: search_results, status: 200
     end
